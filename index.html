@@ -16,7 +16,11 @@
             --border: #d1d8e0;
         }
 
-        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+        html { 
+            scroll-behavior: smooth; 
+            /* Offset for the sticky nav when jumping to sections */
+            scroll-padding-top: 60px; 
+        }
 
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
@@ -26,15 +30,18 @@
             padding-bottom: 120px;
         }
 
+        /* STICKY NAVIGATION BAR */
         .jump-nav {
+            position: -webkit-sticky; /* Support for Safari */
             position: sticky;
             top: 0;
             background: var(--nd-gold);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            padding: 12px 0;
+            z-index: 2000; /* High z-index to stay on top of all content */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 100%;
         }
 
         .jump-nav a {
@@ -51,16 +58,17 @@
 
         #save-status {
             position: fixed;
-            top: 70px;
+            top: 70px; /* Positioned just below the sticky nav */
             right: 20px;
             background: var(--nd-green);
             color: white;
-            padding: 8px 15px;
+            padding: 10px 20px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: bold;
             display: none;
-            z-index: 1001;
+            z-index: 2001;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
 
         .meta-header {
@@ -318,10 +326,8 @@
                     });
                 });
 
-                // Save to local browser storage
                 localStorage.setItem(MASTER_KEY, JSON.stringify(masterList));
 
-                // Send to Google Apps Script for Emailing
                 const scriptURL = 'https://script.google.com/macros/s/AKfycbxvXjxg2Px8wI1StMY0vZacZeK3pPchHmEXv_nE87oZNzD7S7blESQRNPbieZWx3Lsz/exec';
                 
                 try {
@@ -337,7 +343,7 @@
                 }
 
                 statusToast.style.display = 'block';
-                setTimeout(() => statusToast.style.display = 'none', 2000);
+                setTimeout(() => statusToast.style.display = 'none', 3000);
                 updateRecordCount();
                 
                 document.querySelectorAll('.count-dropdown').forEach(s => s.value = 0);
