@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hesburgh Library Space Assessment (Spring 2026)</title>
+    <style>
+        :root {
+            --primary: #002b5c; /* Notre Dame Blue */
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --text: #333;
+            --nd-gold: #8c7535; 
+            --nd-green: #0a843d; 
+            --danger: #e74c3c;
+            --border: #d1d8e0;
+        }
+
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg); 
+            color: var(--text);
+            margin: 0;
+            padding-bottom: 120px;
+        }
+
+        .jump-nav {
+            position: sticky;
+            top: 0;
+            background: var(--nd-gold);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .jump-nav a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: rgba(0,0,0,0.15);
+        }
+
+        .content-container { padding: 20px; }
+
+        #save-status {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            background: var(--nd-green);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: none;
+            z-index: 1001;
+        }
+
+        .meta-header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .meta-input-group { display: flex; flex-direction: column; }
+        .meta-input-group label { font-weight: bold; margin-bottom: 5px; color: var(--primary); }
+        .meta-input-group input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
+
+        h1 { text-align: center; color: var(--primary); margin-bottom: 20px; font-size: 1.6rem; }
+
+        .floor-header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 40px 0 20px 0; 
+        }
+
+        .zone { 
+            background: var(--card); 
+            margin-bottom: 30px; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            border: 1px solid #e0e0e0;
+        }
+
+        .zone-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .zone-header h3 { margin: 0; color: var(--primary); font-size: 1.3rem; }
+        .zone-total { background: var(--nd-green); color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; }
+
+        .activity-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+            gap: 12px; 
+            margin-bottom: 15px;
+        }
+
+        .activity-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #fdfdfd; 
+            padding: 10px 15px; 
+            border: 1px solid #f0f0f0;
+            border-radius: 10px; 
+        }
+
+        .count-dropdown { width: 75px; height: 35px; font-size: 1rem; border: 2px solid var(--border); border-radius: 6px; }
+
+        .zone-comment-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            background: #fffdf2;
+            resize: none; 
+            overflow: hidden; 
+            min-height: 45px;
+        }
+
+        .footer-section { 
+            margin-top: 50px; 
+            padding: 25px; 
+            background: var(--primary); 
+            border-radius: 12px; 
+            color: white;
+        }
+
+        .actions { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            margin-top: 25px; 
+        }
+
+        button.main-btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        #submit-btn { background: var(--nd-green); color: white; }
+        #clear-btn { background: var(--danger); color: white; }
+        #export-btn { background: var(--nd-gold); color: white; }
+        
+        #record-count { text-align: center; margin-top: 15px; font-size: 1rem; font-weight: bold; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <nav class="jump-nav">
+        <a href="#top">TOP</a>
+        <a href="#floor1">FLOOR 1</a>
+        <a href="#floor2">FLOOR 2</a>
+        <a href="#submit-area">FINISH</a>
+    </nav>
+
+    <div id="save-status">Walk-through Saved & Email Sent</div>
+
+    <div class="content-container" id="top">
+        <h1>Hesburgh Library Space Assessment (Spring 2026)</h1>
+
+        <div class="meta-header">
+            <div class="meta-input-group">
+                <label>Observer Initials</label>
+                <input type="text" id="observer-initials" placeholder="e.g. JD">
+            </div>
+            <div class="meta-input-group">
+                <label>Current Time</label>
+                <input type="text" id="timestamp-display" readonly>
+            </div>
+        </div>
+
+        <div id="tracker-form">
+            <div id="floors-container"></div>
+
+            <section class="footer-section" id="submit-area">
+                <label><strong>Final Shift Notes (General Observations):</strong></label>
+                <textarea id="overall-notes" rows="4" style="width:100%; margin-top:10px; border-radius:8px; padding:10px; font-size:1rem;"></textarea>
+               
+                <div class="actions">
+                    <button id="submit-btn" class="main-btn">Save & Email Walk-through</button>
+                    <button id="clear-btn" class="main-btn">Reset All Data</button>
+                    <button id="export-btn" class="main-btn">Export Master CSV</button>
+                    <div id="record-count">Walk-throughs in Master List: 0</div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const MASTER_KEY = 'hesburgh_master_data_2026';
+            const observerInput = document.getElementById('observer-initials');
+            const overallNotesInput = document.getElementById('overall-notes');
+            const statusToast = document.getElementById('save-status');
+            const recordDisplay = document.getElementById('record-count');
+
+            const floors = {
+                "Floor 1": ["Concourse", "Scholar’s Lounge", "Entrance Gallery", "Holtz Reading Room", "Collaboration Hub", "Research Commons", "PC Computer Cluster", "Screen Sharing Tables"],
+                "Floor 2": ["Entrance Gallery", "Holtz Reading Room", "Unrenovated Southwest", "North Reading Room", "Collaboration Hub", "220", "231A", "231B", "231C", "235", "NFCDS", "246", "247", "248", "NFCDS Computer Cluster", "PC Computer Cluster", "Mac Computer Cluster", "Screen Sharing Tables", "264"]
+            };
+
+            const activities = ["Class meeting or event", "Individual", "Collaboration", "Socialization", "Abandoned items", "Using dry erase board", "Created a room on the fly", "Using mobile monitor", "Using power thread", "Using provided technology"];
+
+            if(!localStorage.getItem(MASTER_KEY)) localStorage.setItem(MASTER_KEY, JSON.stringify([]));
+
+            const container = document.getElementById('floors-container');
+            let optionsHTML = "";
+            for (let i = 0; i <= 101; i++) optionsHTML += `<option value="${i}">${i}</option>`;
+
+            Object.entries(floors).forEach(([floorLabel, zones]) => {
+                const fHeader = document.createElement('h2');
+                fHeader.className = 'floor-header';
+                fHeader.textContent = floorLabel;
+                fHeader.id = floorLabel.replace(/\s+/g, '').toLowerCase(); 
+                container.appendChild(fHeader);
+
+                zones.forEach(zoneName => {
+                    const zoneDiv = document.createElement('div');
+                    zoneDiv.className = 'zone';
+                    zoneDiv.dataset.floor = floorLabel.replace('Floor ', '');
+                    zoneDiv.dataset.zone = zoneName;
+                    zoneDiv.innerHTML = `
+                        <div class="zone-header">
+                            <h3>${zoneName}</h3>
+                            <span class="zone-total">Total: <span class="total-val">0</span></span>
+                        </div>
+                        <div class="activity-grid">
+                            ${activities.map(act => `
+                                <div class="activity-item">
+                                    <span class="activity-label">${act}</span>
+                                    <select class="count-dropdown zone-input" data-activity="${act}">${optionsHTML}</select>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <textarea class="zone-comment-box zone-input" data-activity="ZONE_COMMENT" placeholder="Zone comments for ${zoneName}..."></textarea>
+                    `;
+                    container.appendChild(zoneDiv);
+                });
+            });
+
+            function autoExpand(textarea) {
+                textarea.style.height = 'inherit';
+                textarea.style.height = `${textarea.scrollHeight}px`;
+            }
+
+            document.addEventListener('input', (e) => {
+                if (e.target.classList.contains('zone-comment-box')) autoExpand(e.target);
+            });
+
+            const updateRecordCount = () => {
+                const list = JSON.parse(localStorage.getItem(MASTER_KEY));
+                const uniqueTimestamps = new Set(list.map(r => r.timestamp));
+                recordDisplay.textContent = `Completed Walk-throughs in Master List: ${uniqueTimestamps.size}`;
+            };
+
+            document.addEventListener('change', (e) => {
+                if (e.target.classList.contains('count-dropdown')) {
+                    const zone = e.target.closest('.zone');
+                    const sum = Array.from(zone.querySelectorAll('.count-dropdown')).reduce((a, b) => a + parseInt(b.value), 0);
+                    zone.querySelector('.total-val').textContent = sum;
+                }
+            });
+
+            document.getElementById('submit-btn').addEventListener('click', async () => {
+                const observer = observerInput.value || "NA";
+                const overallNotes = overallNotesInput.value.replace(/,/g, ";").replace(/\n/g, " ");
+                const timestamp = new Date().toLocaleString().replace(/,/g, "");
+                const masterList = JSON.parse(localStorage.getItem(MASTER_KEY));
+                const currentEntryRecords = [];
+
+                document.querySelectorAll('.zone').forEach(zoneDiv => {
+                    const zoneComment = zoneDiv.querySelector('.zone-comment-box').value.replace(/,/g, ";").replace(/\n/g, " ");
+                    const floor = zoneDiv.dataset.floor;
+                    const zoneName = zoneDiv.dataset.zone;
+
+                    zoneDiv.querySelectorAll('.count-dropdown').forEach(select => {
+                        const entry = {
+                            timestamp, observer, floor,
+                            zone: zoneName,
+                            activity: select.dataset.activity,
+                            value: select.value,
+                            zone_comment: zoneComment,
+                            overall_notes: overallNotes
+                        };
+                        masterList.push(entry);
+                        currentEntryRecords.push(entry);
+                    });
+                });
+
+                // Save to local browser storage
+                localStorage.setItem(MASTER_KEY, JSON.stringify(masterList));
+
+                // Send to Google Apps Script for Emailing
+                const scriptURL = 'https://script.google.com/macros/s/AKfycbxvXjxg2Px8wI1StMY0vZacZeK3pPchHmEXv_nE87oZNzD7S7blESQRNPbieZWx3Lsz/exec';
+                
+                try {
+                    await fetch(scriptURL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        cache: 'no-cache',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ records: currentEntryRecords })
+                    });
+                } catch (error) {
+                    console.error("Email error:", error);
+                }
+
+                statusToast.style.display = 'block';
+                setTimeout(() => statusToast.style.display = 'none', 2000);
+                updateRecordCount();
+                
+                document.querySelectorAll('.count-dropdown').forEach(s => s.value = 0);
+                document.querySelectorAll('.zone-comment-box').forEach(t => { t.value = ""; t.style.height = '45px'; });
+                document.querySelectorAll('.total-val').forEach(v => v.textContent = "0");
+                overallNotesInput.value = "";
+                window.scrollTo(0, 0);
+            });
+
+            document.getElementById('export-btn').addEventListener('click', () => {
+                const masterList = JSON.parse(localStorage.getItem(MASTER_KEY));
+                if(masterList.length === 0) return alert("No walk-throughs recorded yet!");
+
+                let csvContent = "\uFEFFTimestamp,Observer Initials,Floor,Zone,Activity,Count,Zone Comment,Overall Shift Notes\n";
+                masterList.forEach(r => {
+                    csvContent += `${r.timestamp},${r.observer},${r.floor},"${r.zone}","${r.activity}",${r.value},"${r.zone_comment}","${r.overall_notes}"\n`;
+                });
+
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Hesburgh_Assessment_Master_Spring_2026.csv`;
+                a.click();
+            });
+
+            document.getElementById('clear-btn').addEventListener('click', () => {
+                if(confirm("DANGER: This will delete ALL saved walk-throughs in your local browser history. Proceed?")) {
+                    localStorage.setItem(MASTER_KEY, JSON.stringify([]));
+                    location.reload();
+                }
+            });
+
+            updateRecordCount();
+            setInterval(() => { document.getElementById('timestamp-display').value = new Date().toLocaleString(); }, 1000);
+        });
+    </script>
+</body>
+</html>
