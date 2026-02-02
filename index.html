@@ -82,8 +82,7 @@
 
         .meta-input-group { display: flex; flex-direction: column; }
         .meta-input-group label { font-weight: bold; margin-bottom: 5px; color: var(--primary); }
-        /* Added select to styling */
-        .meta-input-group input, .meta-input-group select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: white; }
+        .meta-input-group input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
 
         h1 { text-align: center; color: var(--primary); margin-bottom: 20px; font-size: 1.6rem; }
 
@@ -132,11 +131,11 @@
             border: 1px solid #f0f0f0;
             border-radius: 10px; 
         }
-        
-        /* Highlight Noise Level row specifically */
-        .activity-item[data-activity="Noise Level"] {
+
+        /* Distinct styling for Noise Level */
+        .activity-item.noise-row {
             background: #fff8e1;
-            border-color: var(--nd-gold);
+            border: 1px solid var(--nd-gold);
         }
 
         .count-dropdown { width: 75px; height: 35px; font-size: 1rem; border: 2px solid var(--border); border-radius: 6px; }
@@ -204,14 +203,8 @@
 
         <div class="meta-header">
             <div class="meta-input-group">
-                <label>Observer</label>
-                <select id="observer-initials">
-                    <option value="" disabled selected>Select ID</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                </select>
+                <label>Observer Initials</label>
+                <input type="text" id="observer-initials" placeholder="e.g. JD">
             </div>
             <div class="meta-input-group">
                 <label>Current Time</label>
@@ -245,24 +238,22 @@
             const recordDisplay = document.getElementById('record-count');
 
             const floors = {
-                "Floor 1": ["Concourse", "Scholar’s Lounge", "Entrance Gallery", "Holtz Reading Room", "Collaboration Hub", "Research Commons", "PC Computer Cluster", "Screen Sharing Tables"],
+                "Floor 1": ["125", "Concourse", "Scholar’s Lounge", "Entrance Gallery", "Holtz Reading Room", "Collaboration Hub", "Research Commons", "PC Computer Cluster", "Screen Sharing Tables"],
                 "Floor 2": ["Entrance Gallery", "Holtz Reading Room", "Unrenovated Southwest", "North Reading Room", "Collaboration Hub", "220", "231A", "231B", "231C", "235", "NFCDS", "246", "247", "248", "NFCDS Computer Cluster", "PC Computer Cluster", "Mac Computer Cluster", "Screen Sharing Tables", "264"]
             };
 
-            // Added "Noise Level" to activities
             const activities = ["Noise Level", "Class meeting or event", "Individual", "Collaboration", "Socialization", "Abandoned items", "Using dry erase board", "Created a room on the fly", "Using mobile monitor", "Using power thread", "Using provided technology"];
 
             if(!localStorage.getItem(MASTER_KEY)) localStorage.setItem(MASTER_KEY, JSON.stringify([]));
 
             const container = document.getElementById('floors-container');
             
-            // Generate standard options 0-101
-            let optionsHTML = "";
-            for (let i = 0; i <= 101; i++) optionsHTML += `<option value="${i}">${i}</option>`;
-
-            // Generate noise options 0-3
-            let noiseOptionsHTML = "";
-            for (let i = 0; i <= 3; i++) noiseOptionsHTML += `<option value="${i}">${i}</option>`;
+            // Generate options HTML
+            let headcountOptions = "";
+            for (let i = 0; i <= 101; i++) headcountOptions += `<option value="${i}">${i}</option>`;
+            
+            let noiseOptions = "";
+            for (let i = 0; i <= 3; i++) noiseOptions += `<option value="${i}">${i}</option>`;
 
             Object.entries(floors).forEach(([floorLabel, zones]) => {
                 const fHeader = document.createElement('h2');
@@ -283,14 +274,15 @@
                         </div>
                         <div class="activity-grid">
                             ${activities.map(act => {
-                                // Use noiseOptionsHTML if the activity is Noise Level
-                                const currentOptions = (act === "Noise Level") ? noiseOptionsHTML : optionsHTML;
+                                const isNoise = act === "Noise Level";
                                 return `
-                                <div class="activity-item" data-activity="${act}">
-                                    <span class="activity-label">${act}</span>
-                                    <select class="count-dropdown zone-input" data-activity="${act}">${currentOptions}</select>
-                                </div>
-                            `}).join('')}
+                                <div class="activity-item ${isNoise ? 'noise-row' : ''}">
+                                    <span class="activity-label"><strong>${act}</strong></span>
+                                    <select class="count-dropdown zone-input" data-activity="${act}">
+                                        ${isNoise ? noiseOptions : headcountOptions}
+                                    </select>
+                                </div>`;
+                            }).join('')}
                         </div>
                         <textarea class="zone-comment-box zone-input" data-activity="ZONE_COMMENT" placeholder="Zone comments for ${zoneName}..."></textarea>
                     `;
@@ -316,20 +308,15 @@
             document.addEventListener('change', (e) => {
                 if (e.target.classList.contains('count-dropdown')) {
                     const zone = e.target.closest('.zone');
-                    // Calculate sum, but EXCLUDE "Noise Level" from the total headcount
+                    // Only sum headcount activities (exclude Noise Level)
                     const sum = Array.from(zone.querySelectorAll('.count-dropdown'))
-                        .filter(select => select.dataset.activity !== "Noise Level")
+                        .filter(sel => sel.dataset.activity !== "Noise Level")
                         .reduce((a, b) => a + parseInt(b.value), 0);
                     zone.querySelector('.total-val').textContent = sum;
                 }
             });
 
             document.getElementById('submit-btn').addEventListener('click', async () => {
-                if (!observerInput.value) {
-                    alert("Please select Observer Initials before saving.");
-                    return;
-                }
-
                 const observer = observerInput.value || "NA";
                 const overallNotes = overallNotesInput.value.replace(/,/g, ";").replace(/\n/g, " ");
                 const timestamp = new Date().toLocaleString().replace(/,/g, "");
@@ -386,7 +373,8 @@
                 const masterList = JSON.parse(localStorage.getItem(MASTER_KEY));
                 if(masterList.length === 0) return alert("No walk-throughs recorded yet!");
 
-                let csvContent = "\uFEFFTimestamp,Observer Initials,Floor,Zone,Activity,Count,Zone Comment,Overall Shift Notes\n";
+                // Updated CSV header for clarity
+                let csvContent = "\uFEFFTimestamp,Observer Initials,Floor,Zone,Activity,Value (Count or Rating),Zone Comment,Overall Shift Notes\n";
                 masterList.forEach(r => {
                     csvContent += `${r.timestamp},${r.observer},${r.floor},"${r.zone}","${r.activity}",${r.value},"${r.zone_comment}","${r.overall_notes}"\n`;
                 });
