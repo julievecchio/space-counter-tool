@@ -18,7 +18,6 @@
 
         html { 
             scroll-behavior: smooth; 
-            /* Offset for the sticky nav when jumping to sections */
             scroll-padding-top: 60px; 
         }
 
@@ -30,16 +29,15 @@
             padding-bottom: 120px;
         }
 
-        /* STICKY NAVIGATION BAR */
         .jump-nav {
-            position: -webkit-sticky; /* Support for Safari */
+            position: -webkit-sticky;
             position: sticky;
             top: 0;
             background: var(--nd-gold);
             display: flex;
             justify-content: space-around;
             padding: 12px 0;
-            z-index: 2000; /* High z-index to stay on top of all content */
+            z-index: 2000;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             width: 100%;
         }
@@ -58,7 +56,7 @@
 
         #save-status {
             position: fixed;
-            top: 70px; /* Positioned just below the sticky nav */
+            top: 70px;
             right: 20px;
             background: var(--nd-green);
             color: white;
@@ -84,7 +82,8 @@
 
         .meta-input-group { display: flex; flex-direction: column; }
         .meta-input-group label { font-weight: bold; margin-bottom: 5px; color: var(--primary); }
-        .meta-input-group input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
+        /* Added select to styling */
+        .meta-input-group input, .meta-input-group select { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; background: white; }
 
         h1 { text-align: center; color: var(--primary); margin-bottom: 20px; font-size: 1.6rem; }
 
@@ -132,6 +131,12 @@
             padding: 10px 15px; 
             border: 1px solid #f0f0f0;
             border-radius: 10px; 
+        }
+        
+        /* Highlight Noise Level row specifically */
+        .activity-item[data-activity="Noise Level"] {
+            background: #fff8e1;
+            border-color: var(--nd-gold);
         }
 
         .count-dropdown { width: 75px; height: 35px; font-size: 1rem; border: 2px solid var(--border); border-radius: 6px; }
@@ -200,7 +205,13 @@
         <div class="meta-header">
             <div class="meta-input-group">
                 <label>Observer Initials</label>
-                <input type="text" id="observer-initials" placeholder="e.g. JD">
+                <select id="observer-initials">
+                    <option value="" disabled selected>Select ID</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                </select>
             </div>
             <div class="meta-input-group">
                 <label>Current Time</label>
@@ -238,13 +249,20 @@
                 "Floor 2": ["Entrance Gallery", "Holtz Reading Room", "Unrenovated Southwest", "North Reading Room", "Collaboration Hub", "220", "231A", "231B", "231C", "235", "NFCDS", "246", "247", "248", "NFCDS Computer Cluster", "PC Computer Cluster", "Mac Computer Cluster", "Screen Sharing Tables", "264"]
             };
 
-            const activities = ["Class meeting or event", "Individual", "Collaboration", "Socialization", "Abandoned items", "Using dry erase board", "Created a room on the fly", "Using mobile monitor", "Using power thread", "Using provided technology"];
+            // Added "Noise Level" to activities
+            const activities = ["Noise Level", "Class meeting or event", "Individual", "Collaboration", "Socialization", "Abandoned items", "Using dry erase board", "Created a room on the fly", "Using mobile monitor", "Using power thread", "Using provided technology"];
 
             if(!localStorage.getItem(MASTER_KEY)) localStorage.setItem(MASTER_KEY, JSON.stringify([]));
 
             const container = document.getElementById('floors-container');
+            
+            // Generate standard options 0-101
             let optionsHTML = "";
             for (let i = 0; i <= 101; i++) optionsHTML += `<option value="${i}">${i}</option>`;
+
+            // Generate noise options 0-3
+            let noiseOptionsHTML = "";
+            for (let i = 0; i <= 3; i++) noiseOptionsHTML += `<option value="${i}">${i}</option>`;
 
             Object.entries(floors).forEach(([floorLabel, zones]) => {
                 const fHeader = document.createElement('h2');
@@ -261,15 +279,18 @@
                     zoneDiv.innerHTML = `
                         <div class="zone-header">
                             <h3>${zoneName}</h3>
-                            <span class="zone-total">Total: <span class="total-val">0</span></span>
+                            <span class="zone-total">Total Headcount: <span class="total-val">0</span></span>
                         </div>
                         <div class="activity-grid">
-                            ${activities.map(act => `
-                                <div class="activity-item">
+                            ${activities.map(act => {
+                                // Use noiseOptionsHTML if the activity is Noise Level
+                                const currentOptions = (act === "Noise Level") ? noiseOptionsHTML : optionsHTML;
+                                return `
+                                <div class="activity-item" data-activity="${act}">
                                     <span class="activity-label">${act}</span>
-                                    <select class="count-dropdown zone-input" data-activity="${act}">${optionsHTML}</select>
+                                    <select class="count-dropdown zone-input" data-activity="${act}">${currentOptions}</select>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                         <textarea class="zone-comment-box zone-input" data-activity="ZONE_COMMENT" placeholder="Zone comments for ${zoneName}..."></textarea>
                     `;
@@ -295,12 +316,20 @@
             document.addEventListener('change', (e) => {
                 if (e.target.classList.contains('count-dropdown')) {
                     const zone = e.target.closest('.zone');
-                    const sum = Array.from(zone.querySelectorAll('.count-dropdown')).reduce((a, b) => a + parseInt(b.value), 0);
+                    // Calculate sum, but EXCLUDE "Noise Level" from the total headcount
+                    const sum = Array.from(zone.querySelectorAll('.count-dropdown'))
+                        .filter(select => select.dataset.activity !== "Noise Level")
+                        .reduce((a, b) => a + parseInt(b.value), 0);
                     zone.querySelector('.total-val').textContent = sum;
                 }
             });
 
             document.getElementById('submit-btn').addEventListener('click', async () => {
+                if (!observerInput.value) {
+                    alert("Please select Observer Initials before saving.");
+                    return;
+                }
+
                 const observer = observerInput.value || "NA";
                 const overallNotes = overallNotesInput.value.replace(/,/g, ";").replace(/\n/g, " ");
                 const timestamp = new Date().toLocaleString().replace(/,/g, "");
