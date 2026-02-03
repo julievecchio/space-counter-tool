@@ -132,7 +132,6 @@
             border-radius: 10px; 
         }
 
-        /* Distinct styling for Noise Level */
         .activity-item.noise-row {
             background: #fff8e1;
             border: 1px solid var(--nd-gold);
@@ -238,8 +237,8 @@
             const recordDisplay = document.getElementById('record-count');
 
             const floors = {
-                "Floor 1": ["125", "Concourse", "Scholar’s Lounge", "Entrance Gallery", "Holtz Reading Room", "Collaboration Hub", "Research Commons", "PC Computer Cluster", "Screen Sharing Tables"],
-                "Floor 2": ["Entrance Gallery", "Holtz Reading Room", "Unrenovated Southwest", "North Reading Room", "Collaboration Hub", "220", "231A", "231B", "231C", "235", "NFCDS", "246", "247", "248", "NFCDS Computer Cluster", "PC Computer Cluster", "Mac Computer Cluster", "Screen Sharing Tables", "264"]
+                "Floor 1": ["Concourse", "Scholar’s Lounge", "Entrance Gallery", "Holtz Reading Room", "Collaboration Hub", "125", "Research Commons", "PC Computer Cluster", "Screen Sharing Tables"],
+                "Floor 2": ["Entrance Gallery", "Holtz Reading Room", "Tech Commons", "Unrenovated Southwest", "North Reading Room", "Collaboration Hub", "220", "231A", "231B", "231C", "235", "NFCDS", "246", "247", "248", "NFCDS Computer Cluster", "PC Computer Cluster", "Mac Computer Cluster", "Screen Sharing Tables", "264"]
             };
 
             const activities = ["Noise Level", "Class meeting or event", "Individual", "Collaboration", "Socialization", "Abandoned items", "Using dry erase board", "Created a room on the fly", "Using mobile monitor", "Using power thread", "Using provided technology"];
@@ -248,7 +247,6 @@
 
             const container = document.getElementById('floors-container');
             
-            // Generate options HTML
             let headcountOptions = "";
             for (let i = 0; i <= 101; i++) headcountOptions += `<option value="${i}">${i}</option>`;
             
@@ -308,7 +306,6 @@
             document.addEventListener('change', (e) => {
                 if (e.target.classList.contains('count-dropdown')) {
                     const zone = e.target.closest('.zone');
-                    // Only sum headcount activities (exclude Noise Level)
                     const sum = Array.from(zone.querySelectorAll('.count-dropdown'))
                         .filter(sel => sel.dataset.activity !== "Noise Level")
                         .reduce((a, b) => a + parseInt(b.value), 0);
@@ -373,7 +370,6 @@
                 const masterList = JSON.parse(localStorage.getItem(MASTER_KEY));
                 if(masterList.length === 0) return alert("No walk-throughs recorded yet!");
 
-                // Updated CSV header for clarity
                 let csvContent = "\uFEFFTimestamp,Observer Initials,Floor,Zone,Activity,Value (Count or Rating),Zone Comment,Overall Shift Notes\n";
                 masterList.forEach(r => {
                     csvContent += `${r.timestamp},${r.observer},${r.floor},"${r.zone}","${r.activity}",${r.value},"${r.zone_comment}","${r.overall_notes}"\n`;
@@ -399,4 +395,4 @@
         });
     </script>
 </body>
-</html>   
+</html>
